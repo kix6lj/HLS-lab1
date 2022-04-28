@@ -144,7 +144,14 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     return Ptr;         
   }
   RetTy visitAllocaInst(AllocaInst &I) {
-    llvm_unreachable("unhandled instruction alloca");
+    if (OpTypeMap.find("alloca") == OpTypeMap.end()) {
+      OpTypeMap["alloca"] = NOpType++;
+      OpTypeCategory.push_back(Operation::OP_Alloca );
+    }
+    auto Ptr =
+        createOperation(NOperation++, OpTypeMap["alloca"], Operation::OP_Alloca);
+    OpMap[&I] = Ptr.get();
+    return Ptr;         
   }  
   RetTy visitCallInst(CallInst &I) {
     Function *F = I.getCalledFunction();
