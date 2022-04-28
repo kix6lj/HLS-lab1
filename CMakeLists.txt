@@ -8,12 +8,14 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS)
     ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 endif()
 
-find_package(LLVM REQUIRED CONFIG)
+find_package(LLVM CONFIG)
 
-include(AddLLVM)
+if (LLVM_FOUND)
+  include(AddLLVM)
 
-include_directories(include ${LLVM_INCLUDE_DIRS})
-link_directories(${LLVM_LIBRARY_DIRS})
+  include_directories(include ${LLVM_INCLUDE_DIRS})
+  link_directories(${LLVM_LIBRARY_DIRS})
+endif()
 
 add_subdirectory(src)
 

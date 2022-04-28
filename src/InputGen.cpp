@@ -11,7 +11,9 @@
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/InstVisitor.h"
 
+#include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/Intrinsics.h>
 #include <llvm/Support/ErrorHandling.h>
 
 #include <fstream>
@@ -69,9 +71,7 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     OpMap[&I] = Ptr.get();
     return Ptr;    
   }
-  RetTy visitAllocaInst(AllocaInst &I) {
-    llvm_unreachable("unhandled instruction alloca");
-  }
+
   RetTy visitPHINode(PHINode &I) {
     if (OpTypeMap.find("phi") == OpTypeMap.end()) {
       OpTypeMap["phi"] = NOpType++;
@@ -113,13 +113,39 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     OpMap[&I] = Ptr.get();
     return Ptr;    
   }
-  // RetTy visitGetElementPtrInst(GetElementPtrInst &I) {
-    
-  // }
-  // RetTy visitLoadInst(LoadInst &I) {}
-  // RetTy visitStoreInst(StoreInst &I) {
-    
-  // }
+  RetTy visitGetElementPtrInst(GetElementPtrInst &I) {
+    if (OpTypeMap.find("getelementptr") == OpTypeMap.end()) {
+      OpTypeMap["getelementptr"] = NOpType++;
+      OpTypeCategory.push_back(Operation::OP_Arithmetic);
+    }
+    auto Ptr =
+        createOperation(NOperation++, OpTypeMap["getelementptr"], Operation::OP_Arithmetic);
+    OpMap[&I] = Ptr.get();
+    return Ptr;        
+  }
+  RetTy visitLoadInst(LoadInst &I) {
+    if (OpTypeMap.find("store") == OpTypeMap.end()) {
+      OpTypeMap["store"] = NOpType++;
+      OpTypeCategory.push_back(Operation::OP_Store);
+    }
+    auto Ptr =
+        createOperation(NOperation++, OpTypeMap["store"], Operation::OP_Store);
+    OpMap[&I] = Ptr.get();
+    return Ptr;            
+  }
+  RetTy visitStoreInst(StoreInst &I) {
+    if (OpTypeMap.find("load") == OpTypeMap.end()) {
+      OpTypeMap["load"] = NOpType++;
+      OpTypeCategory.push_back(Operation::OP_Load);
+    }
+    auto Ptr =
+        createOperation(NOperation++, OpTypeMap["load"], Operation::OP_Load);
+    OpMap[&I] = Ptr.get();
+    return Ptr;         
+  }
+  RetTy visitAllocaInst(AllocaInst &I) {
+    llvm_unreachable("unhandled instruction alloca");
+  }  
   RetTy visitCallInst(CallInst &I) {
     Function *F = I.getCalledFunction();
     string OpName;
@@ -127,6 +153,9 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     case Intrinsic::fabs:
       OpName = "fabs";
       break;
+    case Intrinsic::abs:
+	OpName = "abs";
+	break;
     default:
       OpName = F->getName().str();
     }
@@ -141,11 +170,22 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     OpMap[&I] = Ptr.get();
     return Ptr;
   }
+  RetTy visitCastInst(CastInst &I) {
+    string OpName(I.getOpcodeName());
+    if (OpTypeMap.find(OpName) == OpTypeMap.end()) {
+      OpTypeMap[OpName] = NOpType++;
+      OpTypeCategory.push_back(Operation::OP_Arithmetic);
+    }
+    auto Ptr =
+        createOperation(NOperation++, OpTypeMap[OpName], Operation::OP_Arithmetic);
+    OpMap[&I] = Ptr.get();
+    return Ptr;
+  }
   RetTy visitUnaryOperator(UnaryOperator &I) {
     string OpName(I.getOpcodeName());
     if (OpTypeMap.find(OpName) == OpTypeMap.end()) {
       OpTypeMap[OpName] = NOpType++;
-      OpTypeCategory.push_back(Operation::OP_Arithmetic); // maybe OP_Boolean
+      OpTypeCategory.push_back(Operation::OP_Arithmetic);
     }
     auto Ptr =
         createOperation(NOperation++, OpTypeMap[OpName], Operation::OP_Arithmetic);
@@ -156,7 +196,7 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     string OpName(I.getOpcodeName());
     if (OpTypeMap.find(OpName) == OpTypeMap.end()) {
       OpTypeMap[OpName] = NOpType++;
-      OpTypeCategory.push_back(Operation::OP_Arithmetic); // maybe OP_Boolean
+      OpTypeCategory.push_back(Operation::OP_Arithmetic);
     }
     auto Ptr =
         createOperation(NOperation++, OpTypeMap[OpName], Operation::OP_Arithmetic);
@@ -195,6 +235,7 @@ void dumpInput(ResourceLib *RLib, CDFG *Prog, InstFilter &IF) {
 
   int NBlock = Prog->Blocks.size();
   int NOperation = Prog->Ops.size();
+  llvm::outs() << formatv("{0} {1}\n", NBlock, NOperation);
   for (int i = 0; i < NOpType; ++i)
     llvm::outs() << IF.OpTypeCategory[i] + 1 << " ";
   llvm::outs() << "\n";
@@ -261,7 +302,7 @@ unique_ptr<ResourceLib> makeResourceLibrary(json::Value &RJSON,
   return std::move(RLib);
 }
 
-void buildCDFG(Function &F) {
+void buildCDFG(Function &F, AAResults &AA) {
   auto Prog = std::make_unique<CDFG>();
 
   int NBlock = 0;
@@ -310,7 +351,7 @@ void buildCDFG(Function &F) {
       }
     }
 
-  std::ifstream JSONFile("../test/resource_lib.json");
+  std::ifstream JSONFile("../cases/resource_lib.json");
 
   string content = {std::istreambuf_iterator<char>(JSONFile),
                     std::istreambuf_iterator<char>()};
@@ -335,7 +376,7 @@ struct InputGenPass : public FunctionPass {
     auto &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
     // llvm::errs() << "GOOD\n";
     // auto &AA = tmp.getAAResults();
-    buildCDFG(F);
+    buildCDFG(F, AA);
     return false;
   }
 }; // end of struct Hello

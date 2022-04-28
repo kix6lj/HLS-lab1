@@ -138,6 +138,15 @@ struct CDFG {
     int N = Blocks.size();
     for (size_t i = 0; i < Ordering.size(); ++i)
       BBOrdering[Ordering[N - i - 1]] = i;
+
+    for (auto &&B : Blocks) {
+     for (auto iter = B->Predecessors.begin(); iter != B->Predecessors.end();) {
+       if (BBOrdering[B->ID] <= BBOrdering[(*iter)->ID])
+	 B->Predecessors.erase(iter++);
+       else
+	 iter++;
+     } 
+    }
     
     removeBackEdgeOp();
   }

@@ -188,10 +188,6 @@ void Verifier::checkAreaLimit() {
 void Verifier::checkDependencies() {
   // Assume backedges are removed
   // Check uses happens no earlier that input
-
-  // TODO: what about phi?
-  // TODO: what about the implicit dependency between load/store?
-
   for (auto &&Op : Prog->Ops) {
     int Schedule = OpSchedule[Op->ID];
     if (Schedule == -1) {
@@ -300,6 +296,15 @@ void Verifier::checkConflict() {
   for (auto &&Op : Prog->Ops) {
     int ID = Op->ID;
     if (OpBinding[ID].first == -1) {
+      if (Op->Category != Operation::OP_Alloca &&
+	  Op->Category != Operation::OP_Store &&
+	  Op->Category != Operation::OP_Load &&
+	  Op->Category != Operation::OP_Branch) {
+	ValidFlag = false;
+	ErrorLog.appendMessage("Op #" + std::to_string(Op->ID) +
+			       " should bind to a resource instance");
+      }
+	
       continue;
     }
     int RType = OpBinding[ID].first;
