@@ -19,4 +19,8 @@ endif()
 
 add_subdirectory(src)
 
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/std")
+  add_subdirectory(std)
+endif()
+
 # target_link_libraries(InputGen PUBLIC )
