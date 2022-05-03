@@ -244,7 +244,7 @@ You can refer to the paper [False Loops through Resource Sharing](https://citese
  0 0 
  4 0 
  0 0 
- 2 0
+ 3 0
 ```
 
 ### 5.3 Explanation
