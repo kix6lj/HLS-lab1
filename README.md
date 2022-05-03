@@ -1,6 +1,6 @@
-# HLS-lab1
-Utilities for HLS-lab1
-These utilities have not been fully tested. It may contains bugs. If you find any, please create an issue or notify me..
+# HLS-lab1 | Utilities for HLS-lab1
+[Project Description](/Description.md)
+These utilities have not been fully tested. It may contains bugs. If you find any, please create an issue or notify me.
 
 ## build
 You should first download pre-built libraries of LLVM Release 14 from [LLVM Releases](https://github.com/llvm/llvm-project/releases), choose the package that suites your platform. If your are using windows, then you have to build llvm from source.
@@ -41,3 +41,6 @@ You can find some test cases that are made open in the folder `cases/`. All test
 
 ## Scoring
 The baseline programs have not yet been finished.
+
+## Clarification
+See [Clarification](/Clarification.md)
