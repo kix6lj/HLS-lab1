@@ -243,6 +243,7 @@ void Verifier::checkCycleTime() {
         InEdge[U->ID].push_back(ID);
       }
   }
+
   // compute critical 9path for all cycles
   vector<int> InDeg(NOperation, 0);
   vector<float> CP(NOperation, 0);
@@ -297,6 +298,7 @@ void Verifier::checkConflict() {
     int ID = Op->ID;
     if (OpBinding[ID].first == -1) {
       if (Op->Category != Operation::OP_Alloca &&
+	  Op->Category != Operation::OP_PHI && 
 	  Op->Category != Operation::OP_Store &&
 	  Op->Category != Operation::OP_Load &&
 	  Op->Category != Operation::OP_Branch) {
@@ -389,7 +391,7 @@ bool Verifier::CheckValidity() {
   checkAreaLimit();
   checkDependencies();
   checkCycleTime();
-  checkConflict();  
+  checkConflict();
   checkFalseLoop();
   return ValidFlag;
 }
