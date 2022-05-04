@@ -233,7 +233,6 @@ void Verifier::checkCycleTime() {
     int Schedule = OpSchedule[ID];
     int RType = OpBinding[ID].first;
 
-    std::cerr << ID << " " << RType << " " << Op->Category <<"\n";
     int Cycle = RLib->Resources[RType]->IsSequential
                     ? Schedule + RLib->Resources[RType]->Latency
                     : Schedule;
@@ -304,7 +303,6 @@ void Verifier::checkConflict() {
 	  Op->Category != Operation::OP_Store &&
 	  Op->Category != Operation::OP_Load &&
 	  Op->Category != Operation::OP_Branch) {
-	std::cerr << ID << " " << Op->Category << "\n";
 	ValidFlag = false;
 	ErrorLog.appendMessage("Op #" + std::to_string(Op->ID) +
 			       " should bind to a resource instance");
