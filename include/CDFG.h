@@ -80,8 +80,9 @@ struct CDFG {
 	removeBackEdgeBB(*iter, Visit, InStack, Ordering);
 	iter++;
       } else if (InStack[(*iter)->ID]) {
-	// this is a backedge
-	B->Successors.erase(iter++);
+	iter = B->Successors.erase(iter);
+      } else {
+	iter++;
       }
     }
     
@@ -105,7 +106,7 @@ struct CDFG {
 	  continue;
 	}
 
-	Op->Uses.erase(iter++);
+	iter = Op->Uses.erase(iter);
       }
     }
     
@@ -121,7 +122,7 @@ struct CDFG {
           continue;
         }
 
-        Op->Inputs.erase(iter++);
+        iter = Op->Inputs.erase(iter);
       }
     }
   }
@@ -130,9 +131,9 @@ struct CDFG {
     vector<int> Visit(Blocks.size(), 0);
     vector<int> InStack(Blocks.size(), 0);
     vector<int> Ordering;
-    
+        
     removeBackEdgeBB(EntryBlock, Visit, InStack, Ordering);
-
+    
     BBOrdering.resize(Blocks.size(), 0);
 
     int N = Blocks.size();
@@ -142,7 +143,7 @@ struct CDFG {
     for (auto &&B : Blocks) {
      for (auto iter = B->Predecessors.begin(); iter != B->Predecessors.end();) {
        if (BBOrdering[B->ID] <= BBOrdering[(*iter)->ID])
-	 B->Predecessors.erase(iter++);
+	 iter = B->Predecessors.erase(iter);
        else
 	 iter++;
      } 

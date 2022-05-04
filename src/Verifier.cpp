@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <queue>
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
@@ -232,6 +233,7 @@ void Verifier::checkCycleTime() {
     int Schedule = OpSchedule[ID];
     int RType = OpBinding[ID].first;
 
+    std::cerr << ID << " " << RType << " " << Op->Category <<"\n";
     int Cycle = RLib->Resources[RType]->IsSequential
                     ? Schedule + RLib->Resources[RType]->Latency
                     : Schedule;
@@ -302,13 +304,16 @@ void Verifier::checkConflict() {
 	  Op->Category != Operation::OP_Store &&
 	  Op->Category != Operation::OP_Load &&
 	  Op->Category != Operation::OP_Branch) {
+	std::cerr << ID << " " << Op->Category << "\n";
 	ValidFlag = false;
 	ErrorLog.appendMessage("Op #" + std::to_string(Op->ID) +
 			       " should bind to a resource instance");
+	throw std::runtime_error("Error: Checking can't proceed");
       }
-	
+      
       continue;
     }
+    
     int RType = OpBinding[ID].first;
     if (RLib->Resources[RType]->CompOp.find(Op->OpTypeID) ==
         RLib->Resources[RType]->CompOp.end()) {
@@ -388,11 +393,23 @@ void Verifier::checkFalseLoop() {
 
 bool Verifier::CheckValidity() {
   Prog->preprocess();
-  checkAreaLimit();
-  checkDependencies();
-  checkCycleTime();
-  checkConflict();
-  checkFalseLoop();
+  try {
+    std::cerr << "Start Checking\n";
+    checkAreaLimit();
+    std::cerr << "Area Checking Finished\n";
+    checkConflict();
+    std::cerr << "Resource Conflict Checking Finished\n";
+    checkDependencies();
+    std::cerr << "Dependency Checking Finished\n";
+    checkCycleTime();
+    std::cerr << "CycleTime Checking Finished\n";
+    checkFalseLoop();
+    std::cerr << "False Loop Checking Finished\n";
+  } catch (std::runtime_error &e) {
+    std::cerr << getErrorMsg();
+    std::cerr << e.what();
+    exit(0);
+  }
   return ValidFlag;
 }
 
