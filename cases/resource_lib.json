@@ -85,7 +85,7 @@
 	"delay": 2.5,
 	"latency": 3,
 	"is_pipelined": 0,
-	"comp": ["fmul", "fadd", "fmuladd"]
+	"comp": ["fmul", "fadd", "fsub", "fcmp", "fmuladd"]
     },
     "fp_divider": {
 	"is_seq": 1,
