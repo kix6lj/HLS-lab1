@@ -9,13 +9,19 @@
 	"is_seq": 0,
 	"area": 1,
 	"delay": 0.5,
-	"comp": ["zext", "sext"]
+	"comp": ["zext", "sext", "abs"]
+    },
+    "int_cmp": {
+	"is_seq": 0,
+	"area": 2,
+	"delay": 1.0,
+	"comp": ["icmp"]
     },
     "int_adder": {
 	"is_seq": 0,
 	"area": 5,
 	"delay": 3.5,
-	"comp": ["add", "sub", "getelementptr"]
+	"comp": ["add", "sub", "icmp", "getelementptr"]
     },
     "int_multiplier": {
 	"is_seq": 1,
@@ -30,7 +36,7 @@
 	"area": 20,
 	"latency": 20,
 	"delay": 5.0,
-	"comp": ["div"],
+	"comp": ["sdiv", "udiv"],
 	"is_pipelined": 1
     },
     "int_div_mod": {
@@ -38,7 +44,7 @@
 	"area": 30,
 	"latency": 25,
 	"delay": 5.0,
-	"comp": ["div", "srem", "urem"],
+	"comp": ["sdiv", "udiv", "srem", "urem"],
 	"is_pipelined": 1
     },
     "fp_adder1": {
@@ -72,6 +78,14 @@
 	"latency": 2,
 	"is_pipelined": 0,
 	"comp": ["fmul"]
+    },
+    "fp_muladd": {
+	"is_seq": 1,
+	"area": 15,
+	"delay": 2.5,
+	"latency": 3,
+	"is_pipelined": 0,
+	"comp": ["fmul", "fadd", "fmuladd"]
     },
     "fp_divider": {
 	"is_seq": 1,

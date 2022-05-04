@@ -56,8 +56,8 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
       OpTypeMap["icmp"] = NOpType++;
       OpTypeCategory.push_back(Operation::OP_Compare);
     }
-    auto Ptr = createOperation(NOperation++, OpTypeMap["icmp"],
-			       Operation::OP_Compare);
+    auto Ptr =
+        createOperation(NOperation++, OpTypeMap["icmp"], Operation::OP_Compare);
     OpMap[&I] = Ptr.get();
     return Ptr;
   }
@@ -69,7 +69,7 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     auto Ptr =
         createOperation(NOperation++, OpTypeMap["fcmp"], Operation::OP_Compare);
     OpMap[&I] = Ptr.get();
-    return Ptr;    
+    return Ptr;
   }
 
   RetTy visitPHINode(PHINode &I) {
@@ -80,17 +80,17 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     auto Ptr =
         createOperation(NOperation++, OpTypeMap["phi"], Operation::OP_PHI);
     OpMap[&I] = Ptr.get();
-    return Ptr;  
+    return Ptr;
   }
   RetTy visitBranchInst(BranchInst &I) {
     if (OpTypeMap.find("branch") == OpTypeMap.end()) {
       OpTypeMap["branch"] = NOpType++;
       OpTypeCategory.push_back(Operation::OP_Branch);
     }
-    auto Ptr =
-        createOperation(NOperation++, OpTypeMap["branch"], Operation::OP_Branch);
+    auto Ptr = createOperation(NOperation++, OpTypeMap["branch"],
+                               Operation::OP_Branch);
     OpMap[&I] = Ptr.get();
-    return Ptr; 
+    return Ptr;
   }
 
   RetTy visitReturnInst(ReturnInst &I) {
@@ -108,20 +108,20 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
       OpTypeMap["select"] = NOpType++;
       OpTypeCategory.push_back(Operation::OP_Arithmetic);
     }
-    auto Ptr =
-        createOperation(NOperation++, OpTypeMap["select"], Operation::OP_Arithmetic);
+    auto Ptr = createOperation(NOperation++, OpTypeMap["select"],
+                               Operation::OP_Arithmetic);
     OpMap[&I] = Ptr.get();
-    return Ptr;    
+    return Ptr;
   }
   RetTy visitGetElementPtrInst(GetElementPtrInst &I) {
     if (OpTypeMap.find("getelementptr") == OpTypeMap.end()) {
       OpTypeMap["getelementptr"] = NOpType++;
       OpTypeCategory.push_back(Operation::OP_Arithmetic);
     }
-    auto Ptr =
-        createOperation(NOperation++, OpTypeMap["getelementptr"], Operation::OP_Arithmetic);
+    auto Ptr = createOperation(NOperation++, OpTypeMap["getelementptr"],
+                               Operation::OP_Arithmetic);
     OpMap[&I] = Ptr.get();
-    return Ptr;        
+    return Ptr;
   }
   RetTy visitLoadInst(LoadInst &I) {
     if (OpTypeMap.find("store") == OpTypeMap.end()) {
@@ -131,7 +131,7 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     auto Ptr =
         createOperation(NOperation++, OpTypeMap["store"], Operation::OP_Store);
     OpMap[&I] = Ptr.get();
-    return Ptr;            
+    return Ptr;
   }
   RetTy visitStoreInst(StoreInst &I) {
     if (OpTypeMap.find("load") == OpTypeMap.end()) {
@@ -141,28 +141,32 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     auto Ptr =
         createOperation(NOperation++, OpTypeMap["load"], Operation::OP_Load);
     OpMap[&I] = Ptr.get();
-    return Ptr;         
+    return Ptr;
   }
   RetTy visitAllocaInst(AllocaInst &I) {
     if (OpTypeMap.find("alloca") == OpTypeMap.end()) {
       OpTypeMap["alloca"] = NOpType++;
-      OpTypeCategory.push_back(Operation::OP_Alloca );
+      OpTypeCategory.push_back(Operation::OP_Alloca);
     }
-    auto Ptr =
-        createOperation(NOperation++, OpTypeMap["alloca"], Operation::OP_Alloca);
+    auto Ptr = createOperation(NOperation++, OpTypeMap["alloca"],
+                               Operation::OP_Alloca);
     OpMap[&I] = Ptr.get();
-    return Ptr;         
-  }  
+    return Ptr;
+  }
   RetTy visitCallInst(CallInst &I) {
     Function *F = I.getCalledFunction();
     string OpName;
+
     switch (F->getIntrinsicID()) {
     case Intrinsic::fabs:
       OpName = "fabs";
       break;
     case Intrinsic::abs:
-	OpName = "abs";
-	break;
+      OpName = "abs";
+      break;
+    case Intrinsic::fmuladd:
+      OpName = "fmuladd";
+      break;
     default:
       OpName = F->getName().str();
     }
@@ -172,8 +176,8 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
       OpTypeMap[OpName] = NOpType++;
       OpTypeCategory.push_back(Operation::OP_Arithmetic);
     }
-    auto Ptr =
-        createOperation(NOperation++, OpTypeMap[OpName], Operation::OP_Arithmetic);
+    auto Ptr = createOperation(NOperation++, OpTypeMap[OpName],
+                               Operation::OP_Arithmetic);
     OpMap[&I] = Ptr.get();
     return Ptr;
   }
@@ -183,8 +187,8 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
       OpTypeMap[OpName] = NOpType++;
       OpTypeCategory.push_back(Operation::OP_Arithmetic);
     }
-    auto Ptr =
-        createOperation(NOperation++, OpTypeMap[OpName], Operation::OP_Arithmetic);
+    auto Ptr = createOperation(NOperation++, OpTypeMap[OpName],
+                               Operation::OP_Arithmetic);
     OpMap[&I] = Ptr.get();
     return Ptr;
   }
@@ -194,8 +198,8 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
       OpTypeMap[OpName] = NOpType++;
       OpTypeCategory.push_back(Operation::OP_Arithmetic);
     }
-    auto Ptr =
-        createOperation(NOperation++, OpTypeMap[OpName], Operation::OP_Arithmetic);
+    auto Ptr = createOperation(NOperation++, OpTypeMap[OpName],
+                               Operation::OP_Arithmetic);
     OpMap[&I] = Ptr.get();
     return Ptr;
   }
@@ -205,8 +209,8 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
       OpTypeMap[OpName] = NOpType++;
       OpTypeCategory.push_back(Operation::OP_Arithmetic);
     }
-    auto Ptr =
-        createOperation(NOperation++, OpTypeMap[OpName], Operation::OP_Arithmetic);
+    auto Ptr = createOperation(NOperation++, OpTypeMap[OpName],
+                               Operation::OP_Arithmetic);
     OpMap[&I] = Ptr.get();
     return Ptr;
   }
@@ -216,7 +220,44 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
   }
 };
 
+  void checkFeasiblity(ResourceLib *RLib, CDFG *Prog, InstFilter &IF) {
+    int NResourceType = RLib->Resources.size();
+    int NOpType = IF.NOpType;
+    int NOperation = Prog->Ops.size();
+
+    int MinArea = 0;
+    vector<int> Coverage(NOpType, -1);
+
+    for (int i = 0; i < NResourceType; ++i) {
+      auto R = RLib->Resources[i].get();
+      for (auto OpType : R->CompOp) {
+	if (Coverage[OpType] == -1 || Coverage[OpType] > R->Area)
+	  Coverage[OpType] = R->Area;
+      }
+    }
+
+    for (size_t i = 0; i < Coverage.size(); ++i) 
+      if (Coverage[i] == -1) {
+	auto Category = IF.OpTypeCategory[i];
+	if (Category == Operation::OP_Alloca ||
+	    Category == Operation::OP_PHI ||
+	    Category == Operation::OP_Load ||
+	    Category == Operation::OP_Store ||
+	    Category == Operation::OP_Branch)
+	  continue;
+	llvm::errs() << formatv("Optype {0} is not covered by any operation\n", i);
+	exit(0);
+      }
+    
+    for (size_t i = 0; i < Coverage.size(); ++i)
+      if  (Coverage[i] != -1)
+	MinArea += Coverage[i];
+    llvm::errs() << MinArea << "\n";
+  }
+  
 void dumpInput(ResourceLib *RLib, CDFG *Prog, InstFilter &IF) {
+  checkFeasiblity(RLib, Prog, IF);
+    
   int NResourceType = RLib->Resources.size();
   int NOpType = IF.NOpType;
 
@@ -229,9 +270,10 @@ void dumpInput(ResourceLib *RLib, CDFG *Prog, InstFilter &IF) {
     if (R->IsSequential) {
       // llvm::outs() << R->Latency << " " << R->Delay << " " << R->IsPipelined
       //              << "\n";
-      llvm::outs() << formatv("{0} {1:F} {2:D}\n", R->Latency, R->Delay, R->IsPipelined);
+      llvm::outs() << formatv("{0} {1:F} {2:D}\n", R->Latency, R->Delay,
+                              R->IsPipelined);
     } else {
-      // llvm::outs() << R->Delay << "\n"; 
+      // llvm::outs() << R->Delay << "\n";
       llvm::outs() << formatv("{0}\n", R->Delay);
     }
     llvm::outs() << R->CompOp.size() << " ";
@@ -323,7 +365,7 @@ void buildCDFG(Function &F, AAResults &AA) {
   }
 
   for (auto &B : F) {
-    auto Block = BlockMap[&B]; 
+    auto Block = BlockMap[&B];
     for (auto *P : predecessors(&B)) {
       auto Pred = BlockMap[P];
       Block->Predecessors.push_back(Pred);
@@ -344,7 +386,7 @@ void buildCDFG(Function &F, AAResults &AA) {
       OpPtr->ParentCDFG = Prog.get();
     }
   }
-  
+
   for (auto &B : F)
     for (auto &I : B) {
       auto Op = Filter.OpMap[&I];
@@ -363,7 +405,7 @@ void buildCDFG(Function &F, AAResults &AA) {
   string content = {std::istreambuf_iterator<char>(JSONFile),
                     std::istreambuf_iterator<char>()};
 
-//  llvm::outs() << content << "\n";
+  //  llvm::outs() << content << "\n";
   json::Value LibraryJSON = json::parse(content).get();
 
   auto RLib = makeResourceLibrary(LibraryJSON, Filter);
