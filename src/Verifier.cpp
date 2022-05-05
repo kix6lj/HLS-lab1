@@ -250,8 +250,6 @@ void Verifier::checkCycleTime() {
     int Schedule = OpSchedule[ID];
     int RType = OpBinding[ID].first;
 
-
-    std::cerr << ID << " " << RType << "\n";
     int Cycle = Schedule + OpTiming[ID].first;
 
     for (auto U : Op->Uses)
@@ -316,11 +314,11 @@ bool Verifier::checkConflict(Operation *Op1, Operation *Op2,
 void Verifier::checkConflict() {
   for (auto &&Op : Prog->Ops) {
     int ID = Op->ID;
-    if (Op->Category != Operation::OP_Alloca &&
-        Op->Category != Operation::OP_PHI &&
-        Op->Category != Operation::OP_Store &&
-        Op->Category != Operation::OP_Load &&
-        Op->Category != Operation::OP_Branch) {
+    if (Op->Category == Operation::OP_Alloca ||
+        Op->Category == Operation::OP_PHI ||
+        Op->Category == Operation::OP_Store ||
+        Op->Category == Operation::OP_Load ||
+        Op->Category == Operation::OP_Branch) {
       continue;
     }
     

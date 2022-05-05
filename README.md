@@ -23,7 +23,7 @@ Your can generate an input from a C/C++ source code by running
 cd build
 clang -S -emit-llvm -Xclang -disable-optnone -O0 /path/to/code.cpp
 # An xxx.ll will be produced
-opt -enable-new-pm=0 -load src/libInputGen.so -mem2reg -inline -dce -input-gen -S xxx.ll -disable-output > test_case.txt
+opt -enable-new-pm=0 -load src/libInputGen.so -mem2reg -sroa -mem2reg -early-cse -inline -dce -input-gen -S xxx.ll -disable-output > test_case.txt
 ```
 However, there are still some numbers that need to be filled manually. They are marked with **#**.
 **Note**: Function calls in your program need to be inlined.
