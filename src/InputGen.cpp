@@ -123,7 +123,7 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     OpMap[&I] = Ptr.get();
     return Ptr;
   }
-  RetTy visitLoadInst(LoadInst &I) {
+  RetTy visitStoreInst(StoreInst &I) {
     if (OpTypeMap.find("store") == OpTypeMap.end()) {
       OpTypeMap["store"] = NOpType++;
       OpTypeCategory.push_back(Operation::OP_Store);
@@ -133,7 +133,7 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
     OpMap[&I] = Ptr.get();
     return Ptr;
   }
-  RetTy visitStoreInst(StoreInst &I) {
+  RetTy visitLoadInst(LoadInst &I) {
     if (OpTypeMap.find("load") == OpTypeMap.end()) {
       OpTypeMap["load"] = NOpType++;
       OpTypeCategory.push_back(Operation::OP_Load);

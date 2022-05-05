@@ -40,7 +40,8 @@ private:
   vector<int> NumInst, OpSchedule;
   vector<std::pair<int, int>> OpBinding;
   vector<std::pair<int, float>> OpTiming;
-  
+
+  int StoreUnitID, LoadUnitID;
   void ProcessInput(std::istream &InFile);
   void ProcessResult(std::istream &ResultFile);
   void checkAreaLimit();

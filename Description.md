@@ -61,11 +61,11 @@
    - Compare operations
 8. **Compare Operation**: Compare operations has inputs $in1, in2$ and produces a result $l_{out}$ 
 
-##### 2.2.1.2 Special Notes for Load, Store Operations
+##### 2.2.1.2 Special Notes for Load, Store Operations (UPDATED 5/5)
 
 Load operations and Store operations are also associated with latency and delay. Since arrays are pre-bound to memory units, the allocation phase need not to allocate resource for load and store operations. In order to provide timing information for these operations, the resource library has one resource to implement load operations and one to implement store operations. You need to retrieve these information from the resource library.
 
-To simplify the problem, you don't need to consider the implicit dependence between memory operations and we won't check that.
+To simplify the problem, you don't need to consider the implicit dependency as well as the resource conflict between memory operations. We won't check them.
 
 #### 2.2.2 Basic Block
 
@@ -345,7 +345,3 @@ $ ./hls input.txt > output.txt
 Please check https://github.com/kix6lj/HLS-lab1. There are utilities for input generation and result checking. They maybe buggy but will be fixed ASAP after you inform TA.
 
 It very easy to pass the validity checking. (e.g. Scheduling all operation sequentially yields a valid schedule).
-
-
-
- 

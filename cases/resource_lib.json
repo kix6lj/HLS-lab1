@@ -106,5 +106,21 @@
 	"area": 1,
 	"delay": 0.5,
 	"comp": ["fabs"]
+    },
+    "load_unit": {
+	"is_seq": 1,
+	"area": 0,
+	"delay": 2.0,
+	"latency": 2,
+	"is_pipelined": 1,
+	"comp": ["load"]
+    },
+    "store_unit": {
+	"is_seq": 1,
+	"area": 0,
+	"delay": 1.0,
+	"latency": 1,
+	"is_pipelined": 1,
+	"comp": ["store"]
     }
 }

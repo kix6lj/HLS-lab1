@@ -138,6 +138,18 @@ void Verifier::ProcessInput(std::istream &InFile) {
       Prog->Ops[OpID]->Uses.push_back(Prog->Ops[i].get());
     }
   }
+
+  for (size_t i = 0; i < RLib->Resources.size(); ++i) {
+    auto &&R = RLib->Resources[i];
+    for (auto C : R->CompOp)
+      if (OpCategory[C] == Operation::OP_Load) {
+	LoadUnitID = i;
+	break;
+      } else if (OpCategory[C] == Operation::OP_Store) {
+	StoreUnitID = i;
+	break;
+      }
+  }
 }
 
 void Verifier::ProcessResult(std::istream &ResultFile) {
@@ -162,6 +174,11 @@ void Verifier::ProcessResult(std::istream &ResultFile) {
     if (RType != -1)
       ResultFile >> InstID;
 
+    if (Prog->Ops[i]->Category == Operation::OP_Load)
+      RType = LoadUnitID;
+    else if (Prog->Ops[i]->Category == Operation::OP_Store)
+      RType = StoreUnitID;
+    
     OpBinding[i] = std::make_pair(RType, InstID);
     if (RType != -1) {
       int Latency = RLib->Resources[RType]->Latency;
@@ -233,17 +250,19 @@ void Verifier::checkCycleTime() {
     int Schedule = OpSchedule[ID];
     int RType = OpBinding[ID].first;
 
-    int Cycle = RLib->Resources[RType]->IsSequential
-                    ? Schedule + RLib->Resources[RType]->Latency
-                    : Schedule;
+
+    std::cerr << ID << " " << RType << "\n";
+    int Cycle = Schedule + OpTiming[ID].first;
 
     for (auto U : Op->Uses)
       if (OpSchedule[U->ID] == Cycle &&
-          !RLib->Resources[OpBinding[U->ID].first]->IsSequential) {
+	  OpBinding[U->ID].first != -1 &&
+	  OpTiming[U->ID].first == 0) {
         OutEdge[ID].push_back(U->ID);
         InEdge[U->ID].push_back(ID);
       }
   }
+
 
   // compute critical 9path for all cycles
   vector<int> InDeg(NOperation, 0);
@@ -297,18 +316,20 @@ bool Verifier::checkConflict(Operation *Op1, Operation *Op2,
 void Verifier::checkConflict() {
   for (auto &&Op : Prog->Ops) {
     int ID = Op->ID;
+    if (Op->Category != Operation::OP_Alloca &&
+        Op->Category != Operation::OP_PHI &&
+        Op->Category != Operation::OP_Store &&
+        Op->Category != Operation::OP_Load &&
+        Op->Category != Operation::OP_Branch) {
+      continue;
+    }
+    
     if (OpBinding[ID].first == -1) {
-      if (Op->Category != Operation::OP_Alloca &&
-	  Op->Category != Operation::OP_PHI && 
-	  Op->Category != Operation::OP_Store &&
-	  Op->Category != Operation::OP_Load &&
-	  Op->Category != Operation::OP_Branch) {
-	ValidFlag = false;
-	ErrorLog.appendMessage("Op #" + std::to_string(Op->ID) +
-			       " should bind to a resource instance");
-	throw std::runtime_error("Error: Checking can't proceed");
-      }
-      
+      ValidFlag = false;
+      ErrorLog.appendMessage("Op #" + std::to_string(Op->ID) +
+                             " should bind to a resource instance");
+      throw std::runtime_error("Error: Checking can't proceed");
+
       continue;
     }
     
@@ -339,6 +360,10 @@ void Verifier::checkConflict() {
         if (RType_i != RType_j || RInst_i != RInst_j)
           continue;
 
+	if (RType_i == LoadUnitID || RType_i == StoreUnitID ||
+	    RType_j == LoadUnitID || RType_j == StoreUnitID)
+	  continue;
+
         if (checkConflict(*iter_i, *iter_j, RLib->Resources[RType_i].get())) {
           ValidFlag = false;
           ErrorLog.appendMessage("Op #" + std::to_string(ID_i) + " and Op #" +
@@ -364,26 +389,31 @@ void Verifier::checkFalseLoop() {
   for (auto &&Op : Prog->Ops) {
     if (Op->Category == Operation::OP_PHI ||
         Op->Category == Operation::OP_Alloca ||
-        Op->Category == Operation::OP_Branch)
+        Op->Category == Operation::OP_Branch ||
+	Op->Category == Operation::OP_Load ||
+	Op->Category == Operation::OP_Store)
       continue;
-
+    
     int ID = Op->ID;
     int Schedule = OpSchedule[ID];
     int RType = OpBinding[ID].first;
-
+    
     if (RLib->Resources[RType]->IsSequential)
       continue;
 
-    for (auto U : Op->Uses)
+    for (auto U : Op->Uses) {
       if (OpSchedule[U->ID] == Schedule &&
+	  OpBinding[U->ID].first != -1 && 
           !RLib->Resources[OpBinding[U->ID].first]->IsSequential) {
         int IDSrc = InstID[OpBinding[ID]];
         int IDDest = InstID[OpBinding[U->ID]];
         OutEdge[IDSrc].push_back(IDDest);
       }
+    }
   }
 
   if (checkCycle(OutEdge, cnt)) {
+    
     ValidFlag = false;
     ErrorLog.appendMessage("Combinational Cycle was found");
   }
@@ -435,6 +465,8 @@ float Verifier::Evaluate() {
 
 Verifier::Verifier(std::istream &InFile, std::istream &ResultFile) {
   ValidFlag = true;
+  LoadUnitID = -1;
+  StoreUnitID = -1;
   ProcessInput(InFile);
   ProcessResult(ResultFile);
 }
