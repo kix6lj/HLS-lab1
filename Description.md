@@ -61,6 +61,12 @@
    - Compare operations
 8. **Compare Operation**: Compare operations has inputs $in1, in2$ and produces a result $l_{out}$ 
 
+##### 2.2.1.2 Special Notes for Load, Store Operations
+
+Load operations and Store operations are also associated with latency and delay. Since arrays are pre-bound to memory units, the allocation phase need not to allocate resource for load and store operations. In order to provide timing information for these operations, the resource library has one resource to implement load operations and one to implement store operations. You need to retrieve these information from the resource library.
+
+To simplify the problem, you don't need to consider the implicit dependence between memory operations and we won't check that.
+
 #### 2.2.2 Basic Block
 
 ​	The basic blocks and the connection between them constitute the CFG. A basic block's **predecessor** blocks are the blocks that have directed edges to this block. A basic block's **successor** blocks are the blocks that have directed edges from this block. A basic block has at most 2 **successors** blocks.
@@ -95,7 +101,7 @@ Each basic blocks has several operations. And for a basic block with 2 successor
 
 ​	Sharing combinational circuits may lead to combinational loops which should be avoided. For example:
 
-![](C:\Users\kix6\Documents\research\hls_ppt\project\false-loop.PNG)
+![false-loop](/img/false-loop.PNG)
 
 In this case, sharing $v_1$ with $v_4$ and $v_2$ with $v_3$ creates an combinational cycle.	
 
@@ -280,7 +286,7 @@ float mysqrt(float n) {
 
 And the corresponding CDFG is
 
-<img src="C:\Users\kix6\Documents\research\hls_ppt\project\sample.PNG"  />
+![Example CDFG](/img/sample.PNG)
 
 ## 6 Validity Checking
 
@@ -339,3 +345,7 @@ $ ./hls input.txt > output.txt
 Please check https://github.com/kix6lj/HLS-lab1. There are utilities for input generation and result checking. They maybe buggy but will be fixed ASAP after you inform TA.
 
 It very easy to pass the validity checking. (e.g. Scheduling all operation sequentially yields a valid schedule).
+
+
+
+ 
