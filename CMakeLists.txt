@@ -11,6 +11,10 @@ endif()
 find_package(LLVM CONFIG)
 
 if (LLVM_FOUND)
+  separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
+  add_definitions(${LLVM_DEFINITIONS_LIST})
+  
+  list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
   include(AddLLVM)
 
   include_directories(include ${LLVM_INCLUDE_DIRS})
