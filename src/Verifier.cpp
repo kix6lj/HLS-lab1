@@ -282,7 +282,7 @@ void Verifier::checkCycleTime() {
     for (auto Out : OutEdge[Node]) {
       InDeg[Out]--;
       CP[Out] = std::max(CP[Out], CP[Node] + OpTiming[Out].second);
-      if (InDeg[Out] == )
+      if (InDeg[Out] == 0)
 	WorkList.push(Out);
     }
   }
