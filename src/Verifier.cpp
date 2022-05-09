@@ -24,6 +24,7 @@ bool DFS(int u, vector<vector<int>> OutEdge, vector<int> &Visit,
       flag |= DFS(nxt, OutEdge, Visit, InStack);
     else if (InStack[nxt])
       return true;
+  InStack[u] = 0;
   return flag;
 }
 
