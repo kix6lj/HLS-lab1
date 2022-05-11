@@ -5,11 +5,23 @@
 	"delay": 0.5,
 	"comp": ["select"]
     },
-    "int_misc": {
+    "bool_misc": {
+	"is_seq": 0,
+	"area": 1,
+	"delay": 0.1,
+	"comp": ["and", "or", "xor"]
+    },
+    "shift_misc": {
 	"is_seq": 0,
 	"area": 1,
 	"delay": 0.5,
-	"comp": ["zext", "sext", "abs"]
+	"comp": ["shl", "lshr", "shr"]
+    },
+    "int_misc": {
+	"is_seq": 0,
+	"area": 1,
+	"delay": 0.1,
+	"comp": ["zext", "sext", "abs", "trunc"]
     },
     "int_cmp": {
 	"is_seq": 0,
