@@ -220,44 +220,42 @@ struct InstFilter : public InstVisitor<InstFilter, unique_ptr<Operation>> {
   }
 };
 
-  void checkFeasiblity(ResourceLib *RLib, CDFG *Prog, InstFilter &IF) {
-    int NResourceType = RLib->Resources.size();
-    int NOpType = IF.NOpType;
-    int NOperation = Prog->Ops.size();
+void checkFeasiblity(ResourceLib *RLib, CDFG *Prog, InstFilter &IF) {
+  int NResourceType = RLib->Resources.size();
+  int NOpType = IF.NOpType;
+  int NOperation = Prog->Ops.size();
 
-    int MinArea = 0;
-    vector<int> Coverage(NOpType, -1);
+  int MinArea = 0;
+  vector<int> Coverage(NOpType, -1);
 
-    for (int i = 0; i < NResourceType; ++i) {
-      auto R = RLib->Resources[i].get();
-      for (auto OpType : R->CompOp) {
-	if (Coverage[OpType] == -1 || Coverage[OpType] > R->Area)
-	  Coverage[OpType] = R->Area;
-      }
-    }
-
-    for (size_t i = 0; i < Coverage.size(); ++i) 
-      if (Coverage[i] == -1) {
-	auto Category = IF.OpTypeCategory[i];
-	if (Category == Operation::OP_Alloca ||
-	    Category == Operation::OP_PHI ||
-	    Category == Operation::OP_Load ||
-	    Category == Operation::OP_Store ||
-	    Category == Operation::OP_Branch)
-	  continue;
-	llvm::errs() << formatv("Optype {0} is not covered by any operation\n", i);
-	exit(0);
-      }
-    
-    for (size_t i = 0; i < Coverage.size(); ++i)
-      if  (Coverage[i] != -1)
-	MinArea += Coverage[i];
-    llvm::errs() << MinArea << "\n";
-  }
+  map<int, string> NameMap;
+  for (auto kv : IF.OpTypeMap)
+    NameMap[kv.second ] = kv.first;
   
+  for (int i = 0; i < NResourceType; ++i) {
+    auto R = RLib->Resources[i].get();
+    for (auto OpType : R->CompOp) {
+      if (Coverage[OpType] == -1 || Coverage[OpType] > R->Area)
+        Coverage[OpType] = R->Area;
+    }
+  }
+
+  for (size_t i = 0; i < Coverage.size(); ++i)
+    if (Coverage[i] == -1) {
+      auto Category = IF.OpTypeCategory[i];
+      if (Category == Operation::OP_Alloca || Category == Operation::OP_PHI ||
+          Category == Operation::OP_Load || Category == Operation::OP_Store ||
+          Category == Operation::OP_Branch)
+        continue;
+      llvm::errs() << formatv("Optype {0}:{1} is not covered by any operation\n",
+                              i, NameMap[i]);
+      exit(0);
+    }
+}
+
 void dumpInput(ResourceLib *RLib, CDFG *Prog, InstFilter &IF) {
   checkFeasiblity(RLib, Prog, IF);
-    
+
   int NResourceType = RLib->Resources.size();
   int NOpType = IF.NOpType;
 
@@ -292,8 +290,8 @@ void dumpInput(ResourceLib *RLib, CDFG *Prog, InstFilter &IF) {
   for (int i = 0; i < NBlock; ++i) {
     auto B = Prog->Blocks[i].get();
     llvm::outs() << B->Ops.size() << " " << B->Predecessors.size() << " "
-                 << B->Successors.size() << " "
-                 << "#ExpTimes\n";
+                 << B->Successors.size() << " " << Prog->ExpTimes[i] << "\n";
+
     for (auto Op : B->Ops)
       llvm::outs() << Op->ID << " ";
     llvm::outs() << "\n";
@@ -341,11 +339,11 @@ unique_ptr<ResourceLib> makeResourceLibrary(json::Value &RJSON,
     }
 
     if (IsSequential)
-      RLib->Resources.push_back(std::move(
-          ResourceType::createSeq(Area, Delay, Latency, IsPipelined, CompOp)));
+      RLib->Resources.push_back(std::move(ResourceType::createSeq(
+          NResourceType++, Area, Delay, Latency, IsPipelined, CompOp)));
     else
-      RLib->Resources.push_back(
-          std::move(ResourceType::createComb(Area, Delay, CompOp)));
+      RLib->Resources.push_back(std::move(
+          ResourceType::createComb(NResourceType++, Area, Delay, CompOp)));
   }
 
   return std::move(RLib);
@@ -399,6 +397,8 @@ void buildCDFG(Function &F, AAResults &AA) {
         }
       }
     }
+
+  Prog->computeExpTimes(1234);
 
   std::ifstream JSONFile("../cases/resource_lib.json");
 

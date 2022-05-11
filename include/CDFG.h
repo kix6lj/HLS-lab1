@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <cassert>
+#include <cmath>
 
 using std::list;
 using std::unique_ptr;
@@ -60,7 +62,8 @@ struct BBlock {
 struct CDFG {
   vector<unique_ptr<Operation>> Ops;
   vector<unique_ptr<BBlock>> Blocks;
-
+  vector<float> ExpTimes;
+  
   vector<int> BBOrdering;
   
   BBlock *EntryBlock;
@@ -68,13 +71,113 @@ struct CDFG {
   CDFG() {
     Ops.clear();
     Blocks.clear();
+    ExpTimes.clear();
   }
 
+  vector<float> gaussianElim(vector<vector<float>> &A, vector<float> &B) {
+    float EPS = 1e-7;
+    int N = B.size();
+
+    vector<float> Result(N, 0.0);
+    for (int i = 0; i < N; ++i) {
+      int j;
+      for (j = i; j < N; ++j)
+	if (fabs(A[j][i]) > EPS)
+	  break;
+      assert(j < N);
+      
+      if (i != j)
+	swap(A[i], A[j]);
+      for (j = i + 1; j < N; ++j) {
+	if (fabs(A[j][i]) < EPS)
+	  continue;
+	float frac = A[j][i] / A[i][i];
+	for (int k = i; k < N; ++k)
+	  A[j][k] -= A[i][k] * frac;
+	B[j] -= B[i] * frac;
+      }
+    }
+
+    for (int i = N - 1; i >= 0; --i) {
+      for (int j = i + 1; j < N; ++j)
+	B[i] -= A[i][j] * Result[j];
+      Result[i] = B[i];
+    }
+    
+    return Result;
+  }
+  
+  vector<float> gaussianExpTimes(vector<vector<float>> &Prob) {
+    int NBlock = Blocks.size();
+    vector<vector<float>> A;
+    vector<float> B;
+
+    A.resize(NBlock);
+    B.resize(NBlock, 0.0);
+    for (int i = 0; i < NBlock; ++i)
+      A[i].resize(NBlock);
+    
+    for (auto &&B : Blocks) {
+      for (auto Succ : B->Successors) {
+	int IDPred = B->ID;
+	int IDSucc = Succ->ID;
+	// Using -= in case there are multiple edges
+	A[IDSucc][IDPred] -= Prob[IDPred][IDSucc];
+      }
+      A[B->ID][B->ID] = 1;
+    }
+
+    B[EntryBlock->ID] = 1;
+
+    return gaussianElim(A, B);
+  }
+
+  void findEntryBlock() {
+    for (auto &&B : Blocks)
+      if (B->Predecessors.size() == 0) {
+        EntryBlock = B.get();
+        break;
+      }
+  }
+  
+  void computeExpTimes(int seed) {
+    // Random assign transition probability for each basic block
+    // compute ExpTimes using gaussian elimination
+    findEntryBlock();
+    srand(seed);
+    int NBlock = Blocks.size();
+    
+    vector<vector<float>> Prob; // Probability for BB_i to BB_j
+    Prob.resize(NBlock);
+    for (size_t i = 0; i < NBlock; ++i)
+      Prob[i].resize(NBlock);
+
+    for (auto &&B : Blocks) {
+      int NSucc = B->Successors.size();
+      int IDFrom = B->ID;
+      
+      std::vector<int> RndNum;
+      int Sum = 0;
+      for (int i = 0; i < NSucc; ++i) {
+	int Num = rand();
+	Sum += Num;
+	RndNum.push_back(Num);
+      }
+
+      int idx = 0;
+      for (auto Succ : B->Successors) {
+	int IDTo = Succ->ID;
+	Prob[IDFrom][IDTo] = (float) RndNum[idx] / Sum;
+      }
+    }
+
+    ExpTimes = gaussianExpTimes(Prob);
+  }
+  
   void removeBackEdgeBB(BBlock *B, vector<int> &Visit, vector<int> &InStack,
                         vector<int> &Ordering) {
     InStack[B->ID] = 1;
     Visit[B->ID] = 1;
-
     for (auto iter = B->Successors.begin(); iter != B->Successors.end();) {
       if (Visit[(*iter)->ID] == 0) {
 	removeBackEdgeBB(*iter, Visit, InStack, Ordering);
@@ -153,11 +256,7 @@ struct CDFG {
   }
 
   void preprocess() {
-    for (auto &&B : Blocks)
-      if (B->Predecessors.size() == 0) {
-        EntryBlock = B.get();
-        break;
-      }
+    findEntryBlock();
     removeBackEdge();
   }
 };

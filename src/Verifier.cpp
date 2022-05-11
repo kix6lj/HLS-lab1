@@ -38,7 +38,7 @@ bool checkCycle(vector<vector<int>> &OutEdge, int N) {
         return true;
   return false;
 }
-  
+
 }; // namespace
 
 void Verifier::ProcessInput(std::istream &InFile) {
@@ -71,10 +71,10 @@ void Verifier::ProcessInput(std::istream &InFile) {
 
     if (IsSequential) {
       auto ptr =
-          ResourceType::createSeq(Area, Delay, Latency, IsPipelined, CompOp);
+          ResourceType::createSeq(i, Area, Delay, Latency, IsPipelined, CompOp);
       RLib->Resources.push_back(std::move(ptr));
     } else {
-      auto ptr = ResourceType::createComb(Area, Delay, CompOp);
+      auto ptr = ResourceType::createComb(i, Area, Delay, CompOp);
       RLib->Resources.push_back(std::move(ptr));
     }
   }
@@ -86,24 +86,30 @@ void Verifier::ProcessInput(std::istream &InFile) {
 
   Prog->Blocks.resize(NBlock);
   Prog->Ops.resize(NOperation);
-  ExpTimes.resize(NBlock, 0.0);
-
+  Prog->ExpTimes.resize(NBlock);
+  
   for (int i = 0; i < NBlock; ++i)
     Prog->Blocks[i] = std::make_unique<BBlock>(i, Prog.get());
-  
+
   vector<int> OpCategory(NOpType, 0);
-  for (int i = 0; i < NOpType; ++i) 
+  for (int i = 0; i < NOpType; ++i) {
     InFile >> OpCategory[i];
+    OpCategory[i] -= 1;
+  }
 
   for (int i = 0; i < NBlock; ++i) {
     int NOpInBlock, NPred, NSucc;
+    float ExpTimes;
 
-    InFile >> NOpInBlock >> NPred >> NSucc >> ExpTimes[i];
+    InFile >> NOpInBlock >> NPred >> NSucc >> ExpTimes;
+
+    Prog->ExpTimes[i] = ExpTimes;
 
     for (int j = 0; j < NOpInBlock; ++j) {
       int OpID;
       InFile >> OpID;
-      Prog->Ops[OpID] = std::make_unique<Operation>(OpID, Prog->Blocks[i].get(), Prog.get());
+      Prog->Ops[OpID] =
+          std::make_unique<Operation>(OpID, Prog->Blocks[i].get(), Prog.get());
       Prog->Blocks[i]->Ops.push_back(Prog->Ops[OpID].get());
       Prog->Ops[OpID]->ParentBlock = Prog->Blocks[i].get();
     }
@@ -127,7 +133,7 @@ void Verifier::ProcessInput(std::istream &InFile) {
     InFile >> NInputs;
 
     Prog->Ops[i]->OpTypeID = OpType;
-    Prog->Ops[i]->Category = (Operation::OpCategory)(OpCategory[OpType] - 1);
+    Prog->Ops[i]->Category = (Operation::OpCategory) OpCategory[OpType];
     for (int j = 0; j < NInputs; ++j) {
       int OpID;
       InFile >> OpID;
@@ -144,11 +150,11 @@ void Verifier::ProcessInput(std::istream &InFile) {
     auto &&R = RLib->Resources[i];
     for (auto C : R->CompOp)
       if (OpCategory[C] == Operation::OP_Load) {
-	LoadUnitID = i;
-	break;
+        LoadUnitID = i;
+        break;
       } else if (OpCategory[C] == Operation::OP_Store) {
-	StoreUnitID = i;
-	break;
+        StoreUnitID = i;
+        break;
       }
   }
 }
@@ -179,7 +185,7 @@ void Verifier::ProcessResult(std::istream &ResultFile) {
       RType = LoadUnitID;
     else if (Prog->Ops[i]->Category == Operation::OP_Store)
       RType = StoreUnitID;
-    
+
     OpBinding[i] = std::make_pair(RType, InstID);
     if (RType != -1) {
       int Latency = RLib->Resources[RType]->Latency;
@@ -211,11 +217,11 @@ void Verifier::checkDependencies() {
     int Schedule = OpSchedule[Op->ID];
     if (Schedule == -1) {
       if (Op->Category != Operation::OP_Branch &&
-	  Op->Category != Operation::OP_PHI &&
-	  Op->Category != Operation::OP_Alloca) {
-	ValidFlag = false;
-	ErrorLog.appendMessage("Op #" + std::to_string(Op->ID) +
-			       " should have a schedule instead of -1");
+          Op->Category != Operation::OP_PHI &&
+          Op->Category != Operation::OP_Alloca) {
+        ValidFlag = false;
+        ErrorLog.appendMessage("Op #" + std::to_string(Op->ID) +
+                               " should have a schedule instead of -1");
       }
       continue;
     }
@@ -223,8 +229,8 @@ void Verifier::checkDependencies() {
       int ScheduleIn = OpSchedule[In->ID];
       int Latency = OpTiming[In->ID].first;
       int AvailableCycle = ScheduleIn + Latency;
-      if ((OpTiming[Op->ID].first == 0  && ScheduleIn + Latency > Schedule)
-	  || (OpTiming[Op->ID].first > 0 && ScheduleIn + Latency >= Schedule)) {
+      if ((OpTiming[Op->ID].first == 0 && ScheduleIn + Latency > Schedule) ||
+          (OpTiming[Op->ID].first > 0 && ScheduleIn + Latency >= Schedule)) {
         ValidFlag = false;
         ErrorLog.appendMessage("Op #" + std::to_string(Op->ID) +
                                " executes before its input #" +
@@ -254,14 +260,12 @@ void Verifier::checkCycleTime() {
     int Cycle = Schedule + OpTiming[ID].first;
 
     for (auto U : Op->Uses)
-      if (OpSchedule[U->ID] == Cycle &&
-	  OpBinding[U->ID].first != -1 &&
-	  OpTiming[U->ID].first == 0) {
+      if (OpSchedule[U->ID] == Cycle && OpBinding[U->ID].first != -1 &&
+          OpTiming[U->ID].first == 0) {
         OutEdge[ID].push_back(U->ID);
         InEdge[U->ID].push_back(ID);
       }
   }
-
 
   // compute critical 9path for all cycles
   vector<int> InDeg(NOperation, 0);
@@ -284,7 +288,7 @@ void Verifier::checkCycleTime() {
       InDeg[Out]--;
       CP[Out] = std::max(CP[Out], CP[Node] + OpTiming[Out].second);
       if (InDeg[Out] == 0)
-	WorkList.push(Out);
+        WorkList.push(Out);
     }
   }
 
@@ -324,7 +328,7 @@ void Verifier::checkConflict() {
         Op->Category == Operation::OP_Branch) {
       continue;
     }
-    
+
     if (OpBinding[ID].first == -1) {
       ValidFlag = false;
       ErrorLog.appendMessage("Op #" + std::to_string(Op->ID) +
@@ -333,7 +337,7 @@ void Verifier::checkConflict() {
 
       continue;
     }
-    
+
     int RType = OpBinding[ID].first;
     if (RLib->Resources[RType]->CompOp.find(Op->OpTypeID) ==
         RLib->Resources[RType]->CompOp.end()) {
@@ -361,9 +365,9 @@ void Verifier::checkConflict() {
         if (RType_i != RType_j || RInst_i != RInst_j)
           continue;
 
-	if (RType_i == LoadUnitID || RType_i == StoreUnitID ||
-	    RType_j == LoadUnitID || RType_j == StoreUnitID)
-	  continue;
+        if (RType_i == LoadUnitID || RType_i == StoreUnitID ||
+            RType_j == LoadUnitID || RType_j == StoreUnitID)
+          continue;
 
         if (checkConflict(*iter_i, *iter_j, RLib->Resources[RType_i].get())) {
           ValidFlag = false;
@@ -391,20 +395,19 @@ void Verifier::checkFalseLoop() {
     if (Op->Category == Operation::OP_PHI ||
         Op->Category == Operation::OP_Alloca ||
         Op->Category == Operation::OP_Branch ||
-	Op->Category == Operation::OP_Load ||
-	Op->Category == Operation::OP_Store)
+        Op->Category == Operation::OP_Load ||
+        Op->Category == Operation::OP_Store)
       continue;
-    
+
     int ID = Op->ID;
     int Schedule = OpSchedule[ID];
     int RType = OpBinding[ID].first;
-    
+
     if (RLib->Resources[RType]->IsSequential)
       continue;
 
     for (auto U : Op->Uses) {
-      if (OpSchedule[U->ID] == Schedule &&
-	  OpBinding[U->ID].first != -1 && 
+      if (OpSchedule[U->ID] == Schedule && OpBinding[U->ID].first != -1 &&
           !RLib->Resources[OpBinding[U->ID].first]->IsSequential) {
         int IDSrc = InstID[OpBinding[ID]];
         int IDDest = InstID[OpBinding[U->ID]];
@@ -414,7 +417,7 @@ void Verifier::checkFalseLoop() {
   }
 
   if (checkCycle(OutEdge, cnt)) {
-    
+
     ValidFlag = false;
     ErrorLog.appendMessage("Combinational Cycle was found");
   }
@@ -444,21 +447,21 @@ bool Verifier::CheckValidity() {
 
 float Verifier::Evaluate() {
   float TotalLatency = 0;
-  
+
   for (auto &&B : Prog->Blocks) {
     int Start = -1, End = -1;
     for (auto Op : B->Ops) {
       if (Op->Category == Operation::OP_PHI ||
-	  Op->Category == Operation::OP_Alloca ||
-	  Op->Category == Operation::OP_Branch)
-	continue;
-    
+          Op->Category == Operation::OP_Alloca ||
+          Op->Category == Operation::OP_Branch)
+        continue;
+
       if (Start == -1 || Start > OpSchedule[Op->ID])
-	Start = OpSchedule[Op->ID];
+        Start = OpSchedule[Op->ID];
       if (End == -1 || End < OpSchedule[Op->ID] + OpTiming[Op->ID].first)
-	End = OpSchedule[Op->ID] + OpTiming[Op->ID].first;
+        End = OpSchedule[Op->ID] + OpTiming[Op->ID].first;
     }
-    TotalLatency += ExpTimes[B->ID] * (End - Start + 1);
+    TotalLatency += Prog->ExpTimes[B->ID] * (End - Start + 1);
   }
 
   return TotalLatency;

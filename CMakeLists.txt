@@ -9,8 +9,10 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS)
 endif()
 
 find_package(LLVM CONFIG)
+include_directories(inclue)
 
 if (LLVM_FOUND)
+  message(${LLVM_DIR})
   separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
   add_definitions(${LLVM_DEFINITIONS_LIST})
   

@@ -36,7 +36,6 @@ private:
   unique_ptr<ResourceLib> RLib;
   unique_ptr<CDFG> Prog;
 
-  vector<float> ExpTimes;
   vector<int> NumInst, OpSchedule;
   vector<std::pair<int, int>> OpBinding;
   vector<std::pair<int, float>> OpTiming;
