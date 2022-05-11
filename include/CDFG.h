@@ -101,7 +101,7 @@ struct CDFG {
     for (int i = N - 1; i >= 0; --i) {
       for (int j = i + 1; j < N; ++j)
 	B[i] -= A[i][j] * Result[j];
-      Result[i] = B[i];
+      Result[i] = B[i] / A[i][i];
     }
     
     return Result;
@@ -116,7 +116,7 @@ struct CDFG {
     B.resize(NBlock, 0.0);
     for (int i = 0; i < NBlock; ++i)
       A[i].resize(NBlock);
-    
+
     for (auto &&B : Blocks) {
       for (auto Succ : B->Successors) {
 	int IDPred = B->ID;
@@ -124,7 +124,7 @@ struct CDFG {
 	// Using -= in case there are multiple edges
 	A[IDSucc][IDPred] -= Prob[IDPred][IDSucc];
       }
-      A[B->ID][B->ID] = 1;
+      A[B->ID][B->ID] += 1;
     }
 
     B[EntryBlock->ID] = 1;
@@ -159,7 +159,7 @@ struct CDFG {
       std::vector<int> RndNum;
       int Sum = 0;
       for (int i = 0; i < NSucc; ++i) {
-	int Num = rand();
+	int Num = rand() & 32767;
 	Sum += Num;
 	RndNum.push_back(Num);
       }
@@ -168,6 +168,7 @@ struct CDFG {
       for (auto Succ : B->Successors) {
 	int IDTo = Succ->ID;
 	Prob[IDFrom][IDTo] = (float) RndNum[idx] / Sum;
+	idx++;
       }
     }
 
