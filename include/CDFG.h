@@ -1,23 +1,24 @@
 #ifndef CDFG_H
 #define CDFG_H
 
+#include <algorithm>
 #include <list>
 #include <memory>
 #include <vector>
 #include <iostream>
 #include <cassert>
 #include <cmath>
+#include <map>
 
 using std::list;
 using std::unique_ptr;
 using std::vector;
+using std::map;
 
 struct OperationType;
 struct Operation;
 struct BBlock;
 struct CDFG;
-
-struct OperationType {};
 
 struct Operation {
   enum OpCategory {
@@ -45,13 +46,57 @@ struct Operation {
   }
 };
 
+inline bool opNeedSchedule(Operation::OpCategory C) {
+  switch (C) {
+  case Operation::OP_Branch:
+  case Operation::OP_Alloca:
+  case Operation::OP_PHI:
+    return false;
+  default:
+    return true;
+  }
+}
+
+inline bool opNeedBind(Operation::OpCategory C) {
+  switch (C) {
+  case Operation::OP_Branch:
+  case Operation::OP_Alloca:
+  case Operation::OP_PHI:
+  case Operation::OP_Load:
+  case Operation::OP_Store:
+    return false;
+  default:
+    return true;
+  }
+}
+
 struct BBlock {
   int ID;
   list<BBlock *> Predecessors;
   list<BBlock *> Successors;
   list<Operation *> Ops;
+  vector<Operation*> Ordering;
   CDFG *ParentCDFG;
 
+  // compute topo ordering of ops
+  void DFSTopo(Operation *Op, map<Operation*, int> &Visited) {
+    Visited[Op] = 1;
+    for (auto U : Op->Uses) {
+      if (U->ParentBlock == this &&
+	  Visited.find(U) == Visited.end())
+	DFSTopo(U, Visited);
+    }
+    Ordering.push_back(Op);
+  }
+  
+  void preprocess() {
+    map<Operation*, int> Visited;
+    for (auto Op : Ops)
+      if (Visited.find(Op) == Visited.end())
+	DFSTopo(Op, Visited);
+    std::reverse(Ordering.begin(), Ordering.end());
+  }
+  
   BBlock(int ID = 0, CDFG *ParentCDFG = nullptr) :
     ID(ID), ParentCDFG(ParentCDFG) {
     Predecessors.clear();
@@ -259,6 +304,8 @@ struct CDFG {
   void preprocess() {
     findEntryBlock();
     removeBackEdge();
+    for (auto &&BB : Blocks)
+      BB->preprocess();
   }
 };
 

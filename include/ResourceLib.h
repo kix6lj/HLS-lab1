@@ -21,6 +21,10 @@ struct ResourceType {
         Latency(Latency), ID(ID), Delay(Delay), CompOp(Ops.begin(), Ops.end()) {
   }
 
+  bool canImplement(int OpType) const {
+    return CompOp.find(OpType) != CompOp.end();
+  }
+  
   static unique_ptr<ResourceType> createComb(int ID, int Area, float Delay,
                                              const vector<int> &CompOp) {
     return std::make_unique<ResourceType>(0, Area, Delay, 0, ID, 0, CompOp);
