@@ -181,7 +181,6 @@ void Verifier::ProcessResult(std::istream &ResultFile) {
     if (RType != -1)
       ResultFile >> InstID;
 
-    std::cerr << RType << " " << InstID << "\n";
     if (Prog->Ops[i]->Category == Operation::OP_Load)
       RType = LoadUnitID;
     else if (Prog->Ops[i]->Category == Operation::OP_Store)
