@@ -40,6 +40,14 @@ If your result is valid, then it will print a positive number which is the evalu
 ## Test Cases
 You can find some test cases that are made open in the folder `cases/`. All test cases are generated using the input generator. More open test cases will be included in the near future.
 
+### Run Tests
+After you build the project. There will be two executables `build/src/checker` and `build/src/score_calc`. You can run the `test.sh` in `cases/` to test your program. You need to provide four arguments:
+```
+cd cases && chmod +x test.sh
+./test.sh [ID] [/path/to/hls] [/path/to/checker] [/path/to/score_calc]
+```
+where `ID` is the test case number you wish to test.
+
 ## Scoring
 The baseline programs have not yet been finished.
 
