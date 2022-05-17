@@ -38,8 +38,9 @@ while read -r limit; do
 	echo -1 >> tmp_score$1.txt
 	continue
     fi
-    
+
     read -r score < score.txt
+    echo "Area: $limit; Latency: $score"
     echo $score >> tmp_score$1.txt
 done < $area_config
 
@@ -47,3 +48,4 @@ $score_calc tmp_score$1.txt $baseline
 rm score.txt
 rm tmp_score$1.txt
 rm result.txt
+rm tmp_in.txt

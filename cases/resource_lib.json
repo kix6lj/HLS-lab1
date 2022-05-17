@@ -107,6 +107,14 @@
 	"is_pipelined": 1,
 	"comp": ["fdiv"]
     },
+    "fp_div_sqrt": {
+	"is_seq": 1,
+	"area": 40,
+	"delay": 4.0,
+	"latency": 25,
+	"is_pipelined": 1,
+	"comp": ["fdiv", "sqrt", "sqrtf"]
+    },
     "fp_cmp": {
 	"is_seq": 0,
 	"area": 3,
@@ -117,7 +125,7 @@
 	"is_seq": 0,
 	"area": 1,
 	"delay": 0.5,
-	"comp": ["fabs"]
+	"comp": ["fabs", "fneg"]
     },
     "load_unit": {
 	"is_seq": 1,
