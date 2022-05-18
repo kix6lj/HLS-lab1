@@ -2,6 +2,7 @@ build/
 test/
 .cache/
 std/
+handins/
 # Prerequisites
 *.d
 

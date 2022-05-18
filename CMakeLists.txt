@@ -8,8 +8,9 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS)
     ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 endif()
 
+set(local_include "${PROJECT_SOURCE_DIR}/include")
+message("${INCLUDE_DIRECTORIES}")
 find_package(LLVM CONFIG)
-include_directories(inclue)
 
 if (LLVM_FOUND)
   message(${LLVM_DIR})
